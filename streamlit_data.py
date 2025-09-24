@@ -15,10 +15,13 @@ st.title("📄 PSD to HTML Generator")
 uploaded_file = st.file_uploader("Upload PSD file", type=["psd"], accept_multiple_files=False)
 
 if uploaded_file is not None:
-    # Save uploaded PSD to a temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".psd") as tmp:
-        tmp.write(uploaded_file.read())
-        PSD_FILE = tmp.name
+    # Extract base name without extension
+    base_name = os.path.splitext(uploaded_file.name)[0]
+
+    # Save uploaded PSD to temp folder
+    PSD_FILE = os.path.join(tempfile.gettempdir(), f"{base_name}.psd")
+    with open(PSD_FILE, "wb") as f:
+        f.write(uploaded_file.read())
     
     st.success(f"✅ PSD file uploaded: {uploaded_file.name}")
 
@@ -26,14 +29,13 @@ if uploaded_file is not None:
     # 2️⃣ Convert PSD to JSON
     # -------------------------------
     def psd_to_dict(layer):
-        layer_dict = {
+        return {
             "name": layer.name,
             "visible": layer.visible,
             "bbox": layer.bbox,
             "type": "FRAME" if layer.is_group() else "LAYER",
             "children": [psd_to_dict(l) for l in layer] if layer.is_group() else []
         }
-        return layer_dict
 
     try:
         psd = PSDImage.open(PSD_FILE)
@@ -46,9 +48,7 @@ if uploaded_file is not None:
     # -------------------------------
     # 3️⃣ Generate HTML via Groq API
     # -------------------------------
-    # API_KEY = st.secrets.get("GROQ_API_KEY", "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")
     API_KEY = "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"
-
 
     if st.button("Generate HTML"):
         with st.spinner("Generating HTML..."):
@@ -83,23 +83,23 @@ if uploaded_file is not None:
                 st.stop()
 
         # -------------------------------
-        # 4️⃣ Save HTML to temp file
+        # 4️⃣ Save HTML to temp file with same base name
         # -------------------------------
-        html_file = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
-        html_file.write(html_result.encode("utf-8"))
-        html_file.close()
+        HTML_FILE = os.path.join(tempfile.gettempdir(), f"{base_name}.html")
+        with open(HTML_FILE, "w", encoding="utf-8") as f:
+            f.write(html_result)
 
-        st.success("✅ HTML generated successfully!")
+        st.success(f"✅ HTML generated successfully → {base_name}.html")
 
         # -------------------------------
         # 5️⃣ Show options: Open in browser or download
         # -------------------------------
         if st.button("Open HTML in Browser"):
-            webbrowser.open(f"file://{html_file.name}")
+            webbrowser.open(f"file://{HTML_FILE}")
 
         st.download_button(
             label="Download HTML File",
             data=html_result,
-            file_name="psd_to_html.html",
+            file_name=f"{base_name}.html",
             mime="text/html"
         )
