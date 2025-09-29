@@ -48,7 +48,7 @@ if uploaded_file is not None:
     # -------------------------------
     # 3️⃣ Generate HTML via Groq API
     # -------------------------------
-    API_KEY = "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"
+    API_KEY = "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"
 
     if st.button("Generate HTML"):
         with st.spinner("Generating HTML..."):
@@ -103,3 +103,4 @@ if uploaded_file is not None:
             file_name=f"{base_name}.html",
             mime="text/html"
         )
+
